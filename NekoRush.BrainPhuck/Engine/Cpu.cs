@@ -148,6 +148,9 @@ internal class Cpu
                     // Ignore line comments
                     if (COMT.Value && opcode != '\n') break;
 
+                    // Ignore white characters
+                    if (opcode == '\t' || opcode == '\r' || opcode == ' ') break;
+
                     switch ((OpCode) opcode)
                     {
                         case OpCode.CommentEnd:
@@ -168,12 +171,12 @@ internal class Cpu
                             break;
 
                         default:
-                            throw new CpuFaultException($"Invalid instruction {opcode} at address {PC.Value}");
+                            throw new CpuFaultException($"Invalid instruction {Convert.ToChar(opcode)} at address {PC.Value}");
                     }
                 }
 
                 // Invalid instruction
-                else throw new CpuFaultException($"Invalid instruction {opcode} at address {PC.Value}");
+                else throw new CpuFaultException($"Invalid instruction {Convert.ToChar(opcode)} at address {PC.Value}");
 
                 break;
         }

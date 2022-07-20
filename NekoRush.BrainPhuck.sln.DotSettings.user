@@ -6,5 +6,6 @@
     &lt;TestId&gt;NUnit3x::BB15C090-A8C6-4729-9B21-CC8FB5FEF168::net6.0::NekoRush.BrainPhuck.Test.ReadPtrIncTest.ReadAndPrint&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::BB15C090-A8C6-4729-9B21-CC8FB5FEF168::net6.0::NekoRush.BrainPhuck.Test.ReadPtrIncTest.IncAndPrint&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::BB15C090-A8C6-4729-9B21-CC8FB5FEF168::net6.0::NekoRush.BrainPhuck.Test.ReadPtrIncTest.ReadIncAndPrint&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::BB15C090-A8C6-4729-9B21-CC8FB5FEF168::net6.0::NekoRush.BrainPhuck.Test.MultiLineTest.IncAndPrint&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

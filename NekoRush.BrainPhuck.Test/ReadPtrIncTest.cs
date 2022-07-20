@@ -6,11 +6,6 @@ namespace NekoRush.BrainPhuck.Test;
 
 public class ReadPtrIncTest
 {
-    [SetUp]
-    public void Setup()
-    {
-    }
-
     [Test]
     public void IncAndPrint()
     {
