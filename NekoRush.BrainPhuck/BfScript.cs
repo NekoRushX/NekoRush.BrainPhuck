@@ -46,15 +46,16 @@ public class BfScript
             script._cpu = new Engine.Cpu(memory, rom, opt.EnableExtension);
 
             // Set syscall handler
-            script._cpu.SetSysCall(Engine.Cpu.SysCallIndex.Output, (_, o) => {
-                script.OnStdOut.Invoke(script, new((byte) o[0]));
+            script._cpu.SetSysCall(Engine.Cpu.SysCallIndex.Output, (_, args) =>
+            {
+                script.OnStdOut.Invoke(script, new((byte) args[0]));
                 return 0;
             });
-            script._cpu.SetSysCall(Engine.Cpu.SysCallIndex.Input, (_, o) =>
+            script._cpu.SetSysCall(Engine.Cpu.SysCallIndex.Input, (_, args) =>
             {
-                var args = new InOutEventArgs(0);
-                script.OnStdIn.Invoke(script, args);
-                return args.Byte;
+                var inout = new InOutEventArgs(0);
+                script.OnStdIn.Invoke(script, inout);
+                return inout.Byte;
             });
 
             if (script._cpu.Initialize()) return script;

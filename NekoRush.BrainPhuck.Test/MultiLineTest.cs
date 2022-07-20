@@ -1,5 +1,7 @@
 ﻿using NUnit.Framework;
 
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+
 namespace NekoRush.BrainPhuck.Test;
 
 public class MultiLineTest

@@ -171,12 +171,12 @@ internal class Cpu
                             break;
 
                         default:
-                            throw new CpuFaultException($"Invalid instruction {Convert.ToChar(opcode)} at address {PC.Value}");
+                            throw new CpuFaultException($"Invalid instruction 0x{opcode:X2} at address {PC.Value}");
                     }
                 }
 
                 // Invalid instruction
-                else throw new CpuFaultException($"Invalid instruction {Convert.ToChar(opcode)} at address {PC.Value}");
+                else throw new CpuFaultException($"Invalid instruction 0x{opcode:X2} at address {PC.Value}");
 
                 break;
         }
@@ -223,7 +223,7 @@ internal class Cpu
     /// <param name="index"></param>
     /// <param name="args"></param>
     private int SysCall(SysCallIndex index, params object[] args)
-        => _syscall[(int) index]?.Invoke(this, args) ?? 0;
+        => _syscall[(int) index].Invoke(this, args);
 
     public class Register<T> where T : struct
     {
