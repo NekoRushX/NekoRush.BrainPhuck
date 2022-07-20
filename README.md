@@ -9,8 +9,8 @@ With some advanced custom instructions supported.
 - [x] `<`: Move the current pointer to the left.
 - [ ] `[`: Loop start.
 - [ ] `]`: Loop end.
-- [ ] `.`: Output the byte at the data pointer.
-- [ ] `,`: Accept one byte of input, storing its value in the byte at the data pointer.
+- [x] `.`: Output the byte at the data pointer.
+- [x] `,`: Accept one byte of input, storing its value in the byte at the data pointer.
 
 ## Extended Instructions
 - [ ] `(`: Push the byte at the data pointer to the stack.

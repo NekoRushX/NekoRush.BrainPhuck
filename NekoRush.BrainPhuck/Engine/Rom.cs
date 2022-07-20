@@ -2,7 +2,7 @@
 
 namespace NekoRush.BrainPhuck.Engine;
 
-public class Rom
+internal class Rom
 {
     /// <summary>
     /// An array to hold the data

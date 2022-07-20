@@ -1,17 +1,14 @@
 ﻿using NekoRush.BrainPhuck.Exception;
 
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
 // ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
 // ReSharper disable InconsistentNaming
-// ReSharper disable FunctionNeverReturns
-// ReSharper disable SwitchStatementHandlesSomeKnownEnumValuesWithDefault
-// ReSharper disable UnusedAutoPropertyAccessor.Local
 // ReSharper disable EmptyEmbeddedStatement
 
 namespace NekoRush.BrainPhuck.Engine;
 
-public class Cpu
+internal class Cpu
 {
     /// <summary>
     /// ROM
@@ -26,29 +23,35 @@ public class Cpu
     /// <summary>
     /// Register PC
     /// </summary>
-    public Register PC { get; private set; }
+    public Register<int> PC { get; private set; }
 
     /// <summary>
     /// Register End of Program
     /// </summary>
-    public Register PCEND { get; private set; }
+    public Register<int> PCEND { get; private set; }
 
     /// <summary>
     /// Register Pointer
     /// </summary>
-    public Register PTR { get; private set; }
+    public Register<int> PTR { get; private set; }
 
     /// <summary>
     /// Register Breakpoint
     /// </summary>
-    public Register BKPT { get; private set; }
+    public Register<int> BKPT { get; private set; }
+
+    /// <summary>
+    /// Register Comment
+    /// </summary>
+    public Register<bool> COMT { get; private set; }
 
     /// <summary>
     /// Register Stack
     /// </summary>
-    public Register SS { get; private set; }
+    public Register<int> SS { get; private set; }
 
     private readonly bool _extension;
+    private readonly Func<Cpu, object[], int>[] _syscall;
 
     /// <summary>
     /// Create cpu
@@ -60,12 +63,16 @@ public class Cpu
     {
         Rom = rom;
         Memory = memory;
-        PC = new Register();
-        PCEND = new Register();
-        PTR = new Register();
-        BKPT = new Register();
-        SS = new Register();
+
+        PC = new();
+        PCEND = new();
+        PTR = new();
+        BKPT = new();
+        SS = new();
+        COMT = new();
+
         _extension = extension;
+        Array.Resize(ref _syscall, 64);
     }
 
     /// <summary>
@@ -75,18 +82,21 @@ public class Cpu
     public bool Initialize()
     {
         // Zero the registers
-        PTR.Value = 0x00;
         BKPT.Value = 0x00;
-        
+        COMT.Value = false;
+
+        // The heap start at 0x0000
+        PTR.Value = 0x0000;
+
         // The stack start at 0x1000
         SS.Value = 0x1000;
-        
-        // Set pc to 0x1000
+
+        // Set pc to 0x2000
         PC.Value = 0x2000;
 
         // Copy Rom data into memory
         PCEND.Value = PC.Value + Memory.Write(PC.Value, Rom.Data);
-        return PCEND.Value == Rom.Data.Length;
+        return PCEND.Value == PC.Value + Rom.Data.Length;
     }
 
     /// <summary>
@@ -100,6 +110,7 @@ public class Cpu
         if (PC.Value == BKPT.Value)
             throw new CpuFaultException("Breakpoint hit");
 
+        // This program is run to finish
         if (PC.Value == PCEND.Value)
             return false;
 
@@ -119,8 +130,10 @@ public class Cpu
                 Memory.Write(PTR.Value, (byte) (Memory.Read(PTR.Value) - 1));
                 break;
             case OpCode.PutChar:
+                SysCall(SysCallIndex.Output, Memory.Read(PTR.Value));
                 break;
             case OpCode.GetChar:
+                Memory.Write(PTR.Value, (byte) SysCall(SysCallIndex.Input));
                 break;
             case OpCode.LoopStart:
                 break;
@@ -132,16 +145,28 @@ public class Cpu
                 // Is extension enabled
                 if (_extension)
                 {
+                    // Ignore line comments
+                    if (COMT.Value && opcode != '\n') break;
+
                     switch ((OpCode) opcode)
                     {
+                        case OpCode.CommentEnd:
+                            COMT.Value = false;
+                            break;
+                        case OpCode.Comment:
+                            COMT.Value = true;
+                            break;
                         case OpCode.PushStack:
                             break;
                         case OpCode.PopStack:
+                            SS.Value = Memory.Read(PTR.Value);
                             break;
                         case OpCode.ReadPtrJmp:
+                            PC.Value = Memory.Read(PTR.Value);
                             break;
                         case OpCode.SysCall:
                             break;
+
                         default:
                             throw new CpuFaultException($"Invalid instruction {opcode} at address {PC.Value}");
                     }
@@ -154,7 +179,7 @@ public class Cpu
         }
 
         // Increment PC
-        ++PC;
+        ++PC.Value;
 
         return true;
     }
@@ -165,7 +190,7 @@ public class Cpu
     /// <exception cref="CpuFaultException"></exception>
     public void Run()
     {
-        while (Step());
+        while (Step()) ;
     }
 
     /// <summary>
@@ -181,39 +206,54 @@ public class Cpu
     public void ClearBreakPoint()
         => BKPT.Value = 0x00;
 
-    public class Register
+    /// <summary>
+    /// Set syscall function
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="action"></param>
+    public void SetSysCall(SysCallIndex index, Func<Cpu, object[], int> action)
+        => _syscall[(int) index] = action;
+
+    /// <summary>
+    /// System call
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="args"></param>
+    private int SysCall(SysCallIndex index, params object[] args)
+        => _syscall[(int) index]?.Invoke(this, args) ?? 0;
+
+    public class Register<T> where T : struct
     {
-        public int Value { get; set; }
+        public T Value { get; set; }
 
-        public static Register operator ++(Register register)
-        {
-            register.Value++;
-            return register;
-        }
-
-        public static Register operator --(Register register)
-        {
-            register.Value--;
-            return register;
-        }
+        public Register()
+            => Value = default;
     }
 
     public enum OpCode
     {
         // Standard opcodes
-        PtrInc = 62,
-        PtrDec = 60,
-        ReadPtrInc = 43,
-        ReadPtrDec = 45,
-        PutChar = 46,
-        GetChar = 44,
-        LoopStart = 91,
-        LoopEnd = 93,
+        PtrInc = '>',
+        PtrDec = '<',
+        ReadPtrInc = '+',
+        ReadPtrDec = '-',
+        PutChar = '.',
+        GetChar = ',',
+        LoopStart = '[',
+        LoopEnd = ']',
 
         // Extended opcodes
-        PushStack = 40,
-        PopStack = 41,
-        ReadPtrJmp = 64,
-        SysCall = 38
+        Comment = '#',
+        CommentEnd = '\n',
+        PushStack = '(',
+        PopStack = ')',
+        ReadPtrJmp = '@',
+        SysCall = '&'
+    }
+
+    public enum SysCallIndex
+    {
+        Output,
+        Input
     }
 }

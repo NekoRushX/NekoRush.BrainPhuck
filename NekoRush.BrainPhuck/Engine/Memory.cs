@@ -2,7 +2,7 @@
 
 namespace NekoRush.BrainPhuck.Engine;
 
-public class Memory
+internal class Memory
 {
     /// <summary>
     /// Memory
