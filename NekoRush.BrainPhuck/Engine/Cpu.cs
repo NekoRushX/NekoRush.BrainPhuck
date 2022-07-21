@@ -141,7 +141,7 @@ internal class Cpu
         if (BKTCTR.Value > 0)
         {
             ++PC.Value;
-            if (opcode != ']') return true;
+            if (opcode != (char) OpCode.LoopEnd) return true;
 
             --BKTCTR.Value;
             if (BKTCTR.Value >= 0) return true;
