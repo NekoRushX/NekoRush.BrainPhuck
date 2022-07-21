@@ -14,10 +14,12 @@ internal class Memory
         Data = new byte[size];
     }
 
-    public byte Read(int ptr)
-    {
-        return Data[ptr];
-    }
+    /// <summary>
+    /// Read data
+    /// </summary>
+    /// <param name="ptr"></param>
+    /// <returns></returns>
+    public byte Read(int ptr) => Data[ptr];
 
     /// <summary>
     /// Write memory data

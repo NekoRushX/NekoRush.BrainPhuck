@@ -2,6 +2,7 @@
 using NekoRush.BrainPhuck.EventArgs;
 using NekoRush.BrainPhuck.Exception;
 
+// ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
 // ReSharper disable UnusedType.Global
 
@@ -45,12 +46,14 @@ public class BfScript
             // Initialize cpu
             script._cpu = new Engine.Cpu(memory, rom, opt.EnableExtension);
 
-            // Set syscall handler
+            // Set output syscall handler
             script._cpu.SetSysCall(Engine.Cpu.SysCallIndex.Output, (_, args) =>
             {
                 script.OnStdOut?.Invoke(script, new((byte) args[0]));
                 return 0;
             });
+            
+            // Set input syscall handler
             script._cpu.SetSysCall(Engine.Cpu.SysCallIndex.Input, (_, _) =>
             {
                 var inout = new InOutEventArgs(0);
@@ -66,6 +69,14 @@ public class BfScript
     }
 
     /// <summary>
+    /// Create a new instance of BfScript.
+    /// </summary>
+    /// <param name="code"></param>
+    /// <returns></returns>
+    public static BfScript Create(string code)
+        => Create(code, BfScriptOptions.Default);
+
+    /// <summary>
     /// Run the script.
     /// </summary>
     /// <exception cref="CpuFaultException"></exception>
@@ -79,4 +90,23 @@ public class BfScript
     /// <exception cref="CpuFaultException"></exception>
     public bool Step()
         => _cpu!.Step();
+    
+    /// <summary>
+    /// Reset the script
+    /// </summary>
+    public void Reset()
+        => _cpu!.Reset();
+    
+    /// <summary>
+    /// Set breakpoint
+    /// </summary>
+    /// <param name="ptr"></param>
+    public void SetBreakpoint(int ptr)
+        => _cpu!.SetBreakPoint(ptr);
+    
+    /// <summary>
+    /// Clear breakpoint
+    /// </summary>
+    public void ClearBreakpoint()
+        => _cpu!.ClearBreakPoint();
 }

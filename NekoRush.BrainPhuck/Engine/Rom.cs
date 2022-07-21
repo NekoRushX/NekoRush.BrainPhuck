@@ -15,4 +15,11 @@ internal class Rom
         Data = new byte[binary.Length];
         Array.Copy(binary, 0, Data, 0, binary.Length);
     }
+    
+    /// <summary>
+    /// Read data
+    /// </summary>
+    /// <param name="ptr"></param>
+    /// <returns></returns>
+    public byte Read(int ptr) => Data[ptr];
 }

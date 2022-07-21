@@ -97,7 +97,6 @@ internal class Cpu
     public bool Initialize()
     {
         // Reset the registers
-        BKPT.Value = 0x00;
         COMT.Value = false;
         BKTID.Value = 0x00;
         BKTCTR.Value = 0x00;
@@ -106,14 +105,13 @@ internal class Cpu
         PTR.Value = 0x0000;
 
         // The stack start at 0x1000
-        SS.Value = 0x1000;
+        // SS.Value = 0x1000;
 
-        // Set pc to 0x2000
-        PC.Value = 0x2000;
+        // Set pc to 0x0000
+        PC.Value = 0x0000;
+        PCEND.Value = Rom.Data.Length;
 
-        // Copy Rom data into memory
-        PCEND.Value = PC.Value + Memory.Write(PC.Value, Rom.Data);
-        return PCEND.Value == PC.Value + Rom.Data.Length;
+        return true;
     }
 
     /// <summary>
@@ -131,7 +129,7 @@ internal class Cpu
     public bool Step()
     {
         // Check breakpoint
-        if (PC.Value == BKPT.Value)
+        if (PC.Value == BKPT.Value && BKPT.Value != 0)
             throw new CpuFaultException("Breakpoint hit");
 
         // This program is run to finish
@@ -139,7 +137,7 @@ internal class Cpu
             return false;
 
         // Grab next opcode from memory
-        var opcode = Memory.Read(PC.Value);
+        var opcode = Rom.Read(PC.Value);
         if (BKTCTR.Value > 0)
         {
             ++PC.Value;
@@ -207,17 +205,22 @@ internal class Cpu
                         case OpCode.CommentEnd:
                             COMT.Value = false;
                             break;
+
                         case OpCode.Comment:
                             COMT.Value = true;
                             break;
+
                         case OpCode.PushStack:
                             break;
+
                         case OpCode.PopStack:
                             SS.Value = Memory.Read(PTR.Value);
                             break;
+
                         case OpCode.ReadPtrJmp:
                             PC.Value = Memory.Read(PTR.Value);
                             break;
+
                         case OpCode.SysCall:
                             break;
 

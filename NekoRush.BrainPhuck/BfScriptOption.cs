@@ -22,6 +22,6 @@ public class BfScriptOptions
     public static BfScriptOptions Default => new()
     {
         EnableExtension = false,
-        MemorySize = 0x4000
+        MemorySize = 0x2000
     };
 }
