@@ -14,12 +14,12 @@ public class BfScript
     /// <summary>
     /// On output data.
     /// </summary>
-    public event BfEvent<InOutEventArgs> OnStdOut;
+    public event BfEvent<InOutEventArgs>? OnStdOut;
 
     /// <summary>
     /// On read data.
     /// </summary>
-    public event BfEvent<InOutEventArgs> OnStdIn;
+    public event BfEvent<InOutEventArgs>? OnStdIn;
 
     private Engine.Cpu? _cpu;
 
@@ -48,13 +48,13 @@ public class BfScript
             // Set syscall handler
             script._cpu.SetSysCall(Engine.Cpu.SysCallIndex.Output, (_, args) =>
             {
-                script.OnStdOut.Invoke(script, new((byte) args[0]));
+                script.OnStdOut?.Invoke(script, new((byte) args[0]));
                 return 0;
             });
-            script._cpu.SetSysCall(Engine.Cpu.SysCallIndex.Input, (_, args) =>
+            script._cpu.SetSysCall(Engine.Cpu.SysCallIndex.Input, (_, _) =>
             {
                 var inout = new InOutEventArgs(0);
-                script.OnStdIn.Invoke(script, inout);
+                script.OnStdIn?.Invoke(script, inout);
                 return inout.Byte;
             });
 

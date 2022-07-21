@@ -7,8 +7,8 @@ With some advanced custom instructions supported.
 - [x] `-`: Decrement the current data of current pointer by 1.
 - [x] `>`: Move the current pointer to the right.
 - [x] `<`: Move the current pointer to the left.
-- [ ] `[`: Loop start.
-- [ ] `]`: Loop end.
+- [x] `[`: Loop start.
+- [x] `]`: Loop end.
 - [x] `.`: Output the byte at the data pointer.
 - [x] `,`: Accept one byte of input, storing its value in the byte at the data pointer.
 

@@ -1,5 +1,6 @@
 ﻿using NekoRush.BrainPhuck.Exception;
 
+// ReSharper disable UnusedMember.Global
 // ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
@@ -46,12 +47,23 @@ internal class Cpu
     public Register<bool> COMT { get; private set; }
 
     /// <summary>
+    /// Register Bracket id number
+    /// </summary>
+    public Register<int> BKTID { get; private set; }
+
+    /// <summary>
+    /// Register Bracket counter
+    /// </summary>
+    public Register<int> BKTCTR { get; private set; }
+
+    /// <summary>
     /// Register Stack
     /// </summary>
     public Register<int> SS { get; private set; }
 
     private readonly bool _extension;
     private readonly Func<Cpu, object[], int>[] _syscall;
+    private readonly Queue<int> _loopstack;
 
     /// <summary>
     /// Create cpu
@@ -70,9 +82,12 @@ internal class Cpu
         BKPT = new();
         SS = new();
         COMT = new();
+        BKTID = new();
+        BKTCTR = new();
 
         _extension = extension;
-        Array.Resize(ref _syscall, 64);
+        _syscall = new Func<Cpu, object[], int>[64];
+        _loopstack = new Queue<int>();
     }
 
     /// <summary>
@@ -81,9 +96,11 @@ internal class Cpu
     /// <returns></returns>
     public bool Initialize()
     {
-        // Zero the registers
+        // Reset the registers
         BKPT.Value = 0x00;
         COMT.Value = false;
+        BKTID.Value = 0x00;
+        BKTCTR.Value = 0x00;
 
         // The heap start at 0x0000
         PTR.Value = 0x0000;
@@ -100,6 +117,13 @@ internal class Cpu
     }
 
     /// <summary>
+    /// Reset cpu
+    /// </summary>
+    /// <returns></returns>
+    public bool Reset()
+        => Initialize();
+
+    /// <summary>
     /// CPU step
     /// </summary>
     /// <returns></returns>
@@ -114,30 +138,57 @@ internal class Cpu
         if (PC.Value == PCEND.Value)
             return false;
 
+        // Grab next opcode from memory
         var opcode = Memory.Read(PC.Value);
+        if (BKTCTR.Value > 0)
+        {
+            ++PC.Value;
+            if (opcode != ']') return true;
+
+            --BKTCTR.Value;
+            if (BKTCTR.Value >= 0) return true;
+        }
+
         switch ((OpCode) opcode)
         {
             case OpCode.PtrInc:
                 ++PTR.Value;
                 break;
+
             case OpCode.PtrDec:
                 --PTR.Value;
                 break;
+
             case OpCode.ReadPtrInc:
                 Memory.Write(PTR.Value, (byte) (Memory.Read(PTR.Value) + 1));
                 break;
+
             case OpCode.ReadPtrDec:
                 Memory.Write(PTR.Value, (byte) (Memory.Read(PTR.Value) - 1));
                 break;
+
             case OpCode.PutChar:
                 SysCall(SysCallIndex.Output, Memory.Read(PTR.Value));
                 break;
+
             case OpCode.GetChar:
                 Memory.Write(PTR.Value, (byte) SysCall(SysCallIndex.Input));
                 break;
+
             case OpCode.LoopStart:
+                ++BKTID.Value;
+
+                if (Memory.Read(PTR.Value) != 0)
+                    _loopstack.Enqueue(PC.Value - 1);
+                else
+                    BKTCTR.Value = BKTID.Value;
                 break;
+
             case OpCode.LoopEnd:
+                --BKTID.Value;
+
+                var pc = _loopstack.Dequeue();
+                if (Memory.Read(PTR.Value) != 0) PC.Value = pc;
                 break;
 
             default:
